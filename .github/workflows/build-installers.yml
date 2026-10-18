@@ -35,7 +35,7 @@ jobs:
         continue-on-error: true
       - name: 构建静态站
         run: npm run build:web
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: web-out
           path: apps/web/out
@@ -69,7 +69,7 @@ jobs:
       - name: 构建桌面版 + 安装包
         working-directory: apps/desktop
         run: npx tauri build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-installers
           path: |
@@ -103,7 +103,7 @@ jobs:
       - name: 构建 Linux 桌面版
         working-directory: apps/desktop
         run: npx tauri build --bundles appimage,deb
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-installers
           path: |
@@ -161,7 +161,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: android-installers
           path: |
@@ -203,7 +203,7 @@ jobs:
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/App.app Payload/
           zip -qry 聪聪学堂-ios-unsigned.ipa Payload
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ios-ipa
           path: apps/mobile/ios/App/聪聪学堂-ios-unsigned.ipa
@@ -225,7 +225,7 @@ jobs:
           sleep 8
           curl -fsS http://127.0.0.1:8787/api/health
           docker rm -f cstf
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: docker-image-tar
           path: china-study-free-docker.tar
