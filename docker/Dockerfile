@@ -5,7 +5,7 @@
 #       需自行放入 output/ 后重跑 build:data。教材中心(textbook-catalog.json)由 sync:textbooks 自动生成。
 # 音频/课本原页等大资源如需离线打包，可在 build:data 前执行 npm run download-assets（约 2GB）。
 
-FROM node:20-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 
 # 安装全部 workspace 依赖（含 web / server / core；忽略 tauri/capacitor 的 postinstall 下载，容器内用不到）
@@ -19,7 +19,7 @@ RUN npm run build:web
 RUN npm run build:server
 
 # ---- 运行时 ----
-FROM node:20-slim AS runtime
+FROM node:26-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8787
