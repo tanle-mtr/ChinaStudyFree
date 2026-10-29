@@ -71,7 +71,9 @@ function resolveStaticDir(): string {
 const STATIC_DIR = resolveStaticDir();
 
 const app = express();
-app.use(express.json({ limit: "2mb" }));
+// API 请求只包含短文本与数字。限制原始请求体并关闭自动解压，避免把
+// 大请求或压缩炸弹转发给付费 AI / TTS 上游。
+app.use(express.json({ limit: "16kb", inflate: false }));
 
 // ---- CORS（移动端跨域调用）----
 app.use((req, res, next) => {
@@ -120,9 +122,65 @@ function fail(res: Response, status: number, message: string, code?: string) {
 }
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const status = Number((err as { status?: unknown })?.status);
+  if (status === 400 || status === 413 || status === 415) {
+    const message =
+      status === 413 ? "请求体过大" : status === 415 ? "不支持的内容编码" : "请求格式无效";
+    return fail(res, status, message);
+  }
   log("error", "未捕获的中间件错误", { err: String((err as Error)?.stack || err) });
   fail(res, 500, "服务器内部错误");
 });
+
+function readBoundedText(value: unknown, fallback: string, maxLength: number): string | null {
+  if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!text) return fallback;
+  return text.length <= maxLength ? text : null;
+}
+
+function readGrade(value: unknown, fallback: string): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return readBoundedText(value, fallback, 20);
+}
+
+function readInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number | null {
+  if (value === undefined || value === null || value === "") return fallback;
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim()
+        ? Number(value)
+        : Number.NaN;
+  if (!Number.isFinite(parsed)) return null;
+  return Math.min(Math.max(Math.trunc(parsed), min), max);
+}
+
+function readAnswer(value: unknown): string | null {
+  if (value === undefined || value === null) return "";
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const text = String(value).trim();
+  return text.length <= 500 ? text : null;
+}
+
+function readOptions(value: unknown): string[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 8) return null;
+  const options: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") return null;
+    const text = item.trim();
+    if (!text || text.length > 500) return null;
+    options.push(text);
+  }
+  return options;
+}
 
 // ---- 健康检查 ----
 app.get("/api/health", (_req, res) => {
@@ -138,21 +196,24 @@ app.get("/api/health", (_req, res) => {
 });
 
 // ===== 1. 单元小测出题 =====
-interface QuizReq {
-  subject?: string;
-  grade?: number | string;
-  topic?: string;
-  count?: number;
-  difficulty?: "easy" | "medium" | "hard";
-}
 app.post("/api/ai/quiz", async (req: Request, res: Response) => {
   try {
-    const b = req.body as QuizReq;
-    const subject = b.subject || "数学";
-    const grade = b.grade ?? "三年级";
-    const topic = b.topic || "本单元知识点";
-    const count = Math.min(Math.max(Number(b.count) || 5, 1), 15);
-    const difficulty = b.difficulty || "medium";
+    const b = req.body as Record<string, unknown>;
+    const subject = readBoundedText(b.subject, "数学", 40);
+    const grade = readGrade(b.grade, "三年级");
+    const topic = readBoundedText(b.topic, "本单元知识点", 200);
+    const count = readInteger(b.count, 5, 1, 15);
+    const difficulty = readBoundedText(b.difficulty, "medium", 10);
+    if (
+      subject === null ||
+      grade === null ||
+      topic === null ||
+      count === null ||
+      difficulty === null ||
+      !["easy", "medium", "hard"].includes(difficulty)
+    ) {
+      return fail(res, 400, "出题参数无效");
+    }
 
     const system: ChatMessage = {
       role: "system",
@@ -175,42 +236,50 @@ app.post("/api/ai/quiz", async (req: Request, res: Response) => {
   } catch (e) {
     if (e instanceof LLMNotConfigured) return fail(res, 501, "AI 未配置（LLM_API_KEY 缺失）", "LLM_NOT_CONFIGURED");
     console.error("[quiz]", e);
-    fail(res, 500, (e as Error).message);
+    fail(res, 500, "服务暂时不可用，请稍后重试");
   }
 });
 
 // ===== 2. 知识点讲解 =====
 app.post("/api/ai/explain", async (req: Request, res: Response) => {
   try {
-    const b = req.body as { question?: string; answer?: string | number; options?: string[] };
-    if (!b.question) return fail(res, 400, "缺少 question");
+    const b = req.body as Record<string, unknown>;
+    const question = readBoundedText(b.question, "", 2000);
+    const answer = readAnswer(b.answer);
+    const options = readOptions(b.options);
+    if (!question || answer === null || options === null) {
+      return fail(res, 400, "讲解参数无效");
+    }
     const sys: ChatMessage = {
       role: "system",
       content: "你是耐心的小学老师，用孩子能懂的话讲解知识点，不超过 120 字，中文。只输出讲解文本。",
     };
-    const optText = Array.isArray(b.options) ? `选项：${b.options.join(" / ")}。` : "";
-    const ansText = b.answer != null ? `正确答案：${b.answer}。` : "";
+    const optText = options.length ? `选项：${options.join(" / ")}。` : "";
+    const ansText = answer ? `正确答案：${answer}。` : "";
     const user: ChatMessage = {
       role: "user",
-      content: `题目：${b.question}。${optText}${ansText}请用通俗语言讲解为什么。`,
+      content: `题目：${question}。${optText}${ansText}请用通俗语言讲解为什么。`,
     };
     const text = await chatLLM([sys, user], { temperature: 0.6, maxTokens: 400 });
     res.json({ ok: true, explanation: text.trim() });
   } catch (e) {
     if (e instanceof LLMNotConfigured) return fail(res, 501, "AI 未配置（LLM_API_KEY 缺失）", "LLM_NOT_CONFIGURED");
     console.error("[explain]", e);
-    fail(res, 500, (e as Error).message);
+    fail(res, 500, "服务暂时不可用，请稍后重试");
   }
 });
 
 // ===== 3. 课外故事 + 配图 =====
 app.post("/api/ai/story", async (req: Request, res: Response) => {
   try {
-    const b = req.body as { subject?: string; grade?: number | string; theme?: string; sentences?: number };
-    const subject = b.subject || "语文";
-    const grade = b.grade ?? "二年级";
-    const theme = b.theme || "友谊与勇气";
-    const n = Math.min(Math.max(Number(b.sentences) || 8, 4), 20);
+    const b = req.body as Record<string, unknown>;
+    const subject = readBoundedText(b.subject, "语文", 40);
+    const grade = readGrade(b.grade, "二年级");
+    const theme = readBoundedText(b.theme, "友谊与勇气", 200);
+    const n = readInteger(b.sentences, 8, 4, 20);
+    if (subject === null || grade === null || theme === null || n === null) {
+      return fail(res, 400, "故事参数无效");
+    }
 
     const sys: ChatMessage = {
       role: "system",
@@ -244,23 +313,47 @@ app.post("/api/ai/story", async (req: Request, res: Response) => {
   } catch (e) {
     if (e instanceof LLMNotConfigured) return fail(res, 501, "AI 未配置（LLM_API_KEY 缺失）", "LLM_NOT_CONFIGURED");
     console.error("[story]", e);
-    fail(res, 500, (e as Error).message);
+    fail(res, 500, "服务暂时不可用，请稍后重试");
   }
 });
 
 // ===== 4. TTS 语音合成 =====
+const MAX_ACTIVE_TTS_REQUESTS = 2;
+let activeTTSRequests = 0;
 app.post("/api/ai/tts", async (req: Request, res: Response) => {
   try {
-    const b = req.body as { text?: string; voice?: string };
-    if (!b.text || !b.text.trim()) return fail(res, 400, "缺少 text");
-    const { buffer, contentType } = await synthesize(b.text, b.voice);
+    const b = req.body as Record<string, unknown>;
+    if (typeof b.text !== "string" || !b.text.trim() || b.text.length > 1500) {
+      return fail(res, 400, "朗读文本须为 1 至 1500 字符");
+    }
+    if (
+      b.voice !== undefined &&
+      (typeof b.voice !== "string" ||
+        !/^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(b.voice) ||
+        b.voice.length > 80)
+    ) {
+      return fail(res, 400, "语音名称无效");
+    }
+    if (activeTTSRequests >= MAX_ACTIVE_TTS_REQUESTS) {
+      res.setHeader("Retry-After", "5");
+      return fail(res, 429, "朗读服务繁忙，请稍后重试");
+    }
+
+    activeTTSRequests++;
+    let result;
+    try {
+      result = await synthesize(b.text, b.voice);
+    } finally {
+      activeTTSRequests--;
+    }
+    const { buffer, contentType } = result;
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.send(buffer);
   } catch (e) {
     if (e instanceof TTSNotConfigured) return fail(res, 501, "TTS 未配置（DASHSCOPE_API_KEY 缺失）", "TTS_NOT_CONFIGURED");
     console.error("[tts]", e);
-    fail(res, 500, (e as Error).message);
+    fail(res, 500, "服务暂时不可用，请稍后重试");
   }
 });
 

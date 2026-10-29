@@ -30,5 +30,10 @@
   },
   "dependencies": {
     "ws": "^8.18.0"
+  },
+  "overrides": {
+    "body-parser": "1.20.9",
+    "postcss": "8.5.31",
+    "katex": "0.18.10"
   }
 }
