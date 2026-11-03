@@ -4,6 +4,8 @@ import { StatsBar } from "@/components/StatsBar";
 import { AppShell } from "@/components/layout/AppShell";
 import { ChangeGradeButton } from "@/components/ChangeGradeButton";
 import { GradeSubjectGroups } from "@/components/GradeSubjectGroups";
+import { StaticBookGroups } from "@/components/StaticBookGroups";
+import SafeIsland from "@/components/SafeIsland";
 import type { SiteIndex } from "@/types";
 import { gradeFullName, STAGE_BY_ID, stageOfGrade } from "@cstf/core/stage";
 
@@ -33,14 +35,27 @@ export default async function GradePage({ params }: { params: Promise<{ grade: s
       {/* 页头：移动端带 compact StatsBar；lg+ 由右栏 RightRail 常驻 HUD，不再重复 */}
       <div className="w-full max-w-3xl lg:max-w-none">
         <div className="lg:hidden flex justify-end mb-4">
-          <StatsBar compact />
+          <SafeIsland fallback={null}>
+            <StatsBar compact />
+          </SafeIsland>
         </div>
         <div className="flex items-end justify-between gap-3 mb-5 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-extrabold text-ink leading-tight truncate">
             {gradeName}
           </h1>
           <div className="shrink-0">
-            <ChangeGradeButton />
+            <SafeIsland
+              fallback={
+                <a
+                  href={`/stage/`}
+                  className="btn-chunky-primary px-5 py-2 text-sm"
+                >
+                  切换年级
+                </a>
+              }
+            >
+              <ChangeGradeButton />
+            </SafeIsland>
           </div>
         </div>
       </div>
@@ -60,9 +75,12 @@ export default async function GradePage({ params }: { params: Promise<{ grade: s
           </div>
         )}
 
-        {/* 按学科分组的教材卡片（客户端：按「我的版本」排序 + 版本快切 chips） */}
+        {/* 按学科分组的教材卡片：客户端版带版本快切/我的版本排序；
+            一旦在老 WebView 水合崩溃，SafeIsland 回退到服务端静态列表，绝不白屏 */}
         {allBooks.length > 0 && stage && (
-          <GradeSubjectGroups books={allBooks} stage={stage.id} />
+          <SafeIsland fallback={<StaticBookGroups books={allBooks} stage={stage.id} />}>
+            <GradeSubjectGroups books={allBooks} stage={stage.id} />
+          </SafeIsland>
         )}
       </div>
     </main>

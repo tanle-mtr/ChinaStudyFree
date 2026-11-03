@@ -3,6 +3,7 @@ import path from "path";
 import { notFound } from "next/navigation";
 import type { BookStories, SiteIndex } from "@/types";
 import StoryReaderClient from "./StoryReaderClient";
+import SafeIsland from "@/components/SafeIsland";
 
 async function getIndex(): Promise<SiteIndex> {
   const p = path.join(process.cwd(), "public", "data", "index.json");
@@ -44,5 +45,19 @@ export default async function StoryPage({ params }: { params: Promise<{ story: s
   if (!doc) notFound();
   const story = doc.stories.find(s => s.id === storyId);
   if (!story) notFound();
-  return <StoryReaderClient story={story} backHref={`/stories/${bookId}/`} />;
+  return (
+    <SafeIsland
+      fallback={
+        <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+          <h1 className="text-2xl font-extrabold text-ink">{story.title}</h1>
+          <p className="mt-3 text-sm text-ink-light">故事阅读组件加载失败，可返回重试。</p>
+          <a href={`/stories/${bookId}/`} className="btn-chunky-primary mt-6 px-8">
+            返回故事列表
+          </a>
+        </main>
+      }
+    >
+      <StoryReaderClient story={story} backHref={`/stories/${bookId}/`} />
+    </SafeIsland>
+  );
 }

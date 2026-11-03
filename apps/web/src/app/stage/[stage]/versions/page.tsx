@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { InnerHeader } from "@/components/InnerHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { VersionPickerClient } from "@/components/VersionPickerClient";
+import SafeIsland from "@/components/SafeIsland";
 import { STAGES, STAGE_BY_ID, type StageId } from "@cstf/core/stage";
 
 export function generateStaticParams() {
@@ -38,5 +39,19 @@ export default async function StageVersionsPage({
     );
   }
 
-  return <VersionPickerClient stage={stage.id} />;
+  return (
+    <SafeIsland
+      fallback={
+        <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+          <h1 className="text-2xl font-extrabold text-ink">{stage.name}</h1>
+          <p className="mt-3 text-sm text-ink-light">版本选择组件加载失败，可返回重试。</p>
+          <a href={`/stage/${stage.id}/`} className="btn-chunky-primary mt-6 px-8">
+            返回学段
+          </a>
+        </main>
+      }
+    >
+      <VersionPickerClient stage={stage.id} />
+    </SafeIsland>
+  );
 }

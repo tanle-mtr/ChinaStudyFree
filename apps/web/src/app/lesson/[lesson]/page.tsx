@@ -4,6 +4,7 @@ import type { Lesson, SiteIndex } from "@/types";
 import type { PathLessonMeta } from "@/components/PathMap";
 import { findChestAfterLesson } from "@/lib/chestLogic";
 import LessonPageClient from "./LessonPageClient";
+import SafeIsland from "@/components/SafeIsland";
 
 async function getIndex(): Promise<SiteIndex> {
   const p = path.join(process.cwd(), "public", "data", "index.json");
@@ -58,5 +59,19 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
   ]);
   // 本节课结束后是否紧跟一个宝箱 slot
   const chestSlot = findChestAfterLesson(bookId, outline.lessons, lessonId);
-  return <LessonPageClient lesson={lesson} chestSlot={chestSlot} />;
+  return (
+    <SafeIsland
+      fallback={
+        <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+          <h1 className="text-2xl font-extrabold text-ink">{lesson.title}</h1>
+          <p className="mt-3 text-sm text-ink-light">课程组件加载失败，可返回教材页重试。</p>
+          <a href={`/book/${bookId}/`} className="btn-chunky-primary mt-6 px-8">
+            返回教材
+          </a>
+        </main>
+      }
+    >
+      <LessonPageClient lesson={lesson} chestSlot={chestSlot} />
+    </SafeIsland>
+  );
 }

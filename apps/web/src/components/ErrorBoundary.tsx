@@ -61,32 +61,75 @@ export default class ErrorBoundary extends React.Component<
 
   render() {
     if (!this.state.error) return this.props.children;
+    // 兜底页：用内联样式渲染，完全不依赖 tailwind/外部 CSS，
+    // 确保即使样式表加载失败也绝不会是「白屏」。深色背景 + 高对比文字。
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-        <div className="w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-2xl">
-          <div className="text-5xl">🐣</div>
-          <h1 className="mt-3 text-xl font-extrabold text-[#1B1F23]">页面出了一点小问题</h1>
-          <p className="mt-2 text-sm leading-relaxed text-[#5A6B73]">
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2147483646,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          background: "#0F1419",
+          color: "#E8EEF2",
+          fontFamily:
+            "system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ maxWidth: 360 }}>
+          <div style={{ fontSize: 48 }}>🐣</div>
+          <h1 style={{ marginTop: 12, fontSize: 20, fontWeight: 800 }}>
+            页面出了一点小问题
+          </h1>
+          <p style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, color: "#A8B5BD" }}>
             聪聪学堂遇到了一点故障，但你的学习进度已保存在本机。
             点下面的按钮重新载入，就能继续学习。
           </p>
-          <div className="mt-5 flex justify-center gap-3">
+          <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 12 }}>
             <button
               onClick={this.retry}
-              className="rounded-2xl border-2 border-[#E5E5E5] px-5 py-2.5 text-sm font-bold text-[#1B1F23] active:scale-95"
+              style={{
+                borderRadius: 16,
+                border: "2px solid #3A4750",
+                padding: "10px 20px",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#E8EEF2",
+                background: "transparent",
+              }}
             >
               重试
             </button>
             <button
               onClick={this.reload}
-              className="rounded-2xl bg-[#58CC02] px-5 py-2.5 text-sm font-bold text-white shadow-lg active:scale-95"
+              style={{
+                borderRadius: 16,
+                padding: "10px 20px",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#0F1419",
+                background: "#58CC02",
+                border: "none",
+              }}
             >
               重新载入
             </button>
           </div>
-          <details className="mt-4 text-left text-xs text-[#8A9AA1]">
-            <summary className="cursor-pointer">错误详情（反馈时可附上）</summary>
-            <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-words">
+          <details style={{ marginTop: 16, fontSize: 12, color: "#7E8C94", textAlign: "left" }}>
+            <summary style={{ cursor: "pointer" }}>错误详情（反馈时可附上）</summary>
+            <pre
+              style={{
+                marginTop: 4,
+                maxHeight: 128,
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
               {String(this.state.error?.message || this.state.error)}
             </pre>
           </details>

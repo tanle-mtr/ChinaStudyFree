@@ -9,6 +9,8 @@ import {
   ContinueLearningCard,
   CurrentBookBadge,
 } from "@/components/ContinueLearningCard";
+import { StaticBookPath } from "@/components/StaticBookPath";
+import SafeIsland from "@/components/SafeIsland";
 import type { SiteIndex } from "@/types";
 import type { BookOutlineWithLessons } from "./BookPathView";
 import BookPathSection from "./BookPathSection";
@@ -38,27 +40,31 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const gradeBooks = index.books.filter(b => b.grade === book.grade);
 
   return (
-    <AppShell centerMaxWidth={720}>
-    <main className="min-h-screen bg-bg-soft lg:bg-transparent">
+      <AppShell centerMaxWidth={720}>
+      <main className="min-h-screen bg-bg-soft lg:bg-transparent">
       {/* 访问即成为「当前教材」（首页据此直达本页） */}
-      <ActiveBookSync bookId={bookId} grade={book.grade} />
+      <SafeIsland><ActiveBookSync bookId={bookId} grade={book.grade} /></SafeIsland>
 
       {/* 移动端顶栏：当前教材徽章（可换书） + stats */}
       <div className="lg:hidden bg-white border-b border-bg-softer sticky top-0 z-30">
         <div className="max-w-md mx-auto px-4 py-2 flex items-center justify-between gap-2">
-          <CurrentBookBadge book={book} gradeBooks={gradeBooks} />
-          <StatsBar compact />
+          <SafeIsland fallback={<span className="text-sm font-bold text-ink">{book.textbookName}</span>}>
+            <CurrentBookBadge book={book} gradeBooks={gradeBooks} />
+          </SafeIsland>
+          <SafeIsland><StatsBar compact /></SafeIsland>
         </div>
       </div>
 
       {/* 桌面端：当前教材徽章行 */}
       <div className="hidden lg:flex items-center mb-3">
-        <CurrentBookBadge book={book} gradeBooks={gradeBooks} />
+        <SafeIsland fallback={<span className="text-sm font-bold text-ink">{book.textbookName}</span>}>
+          <CurrentBookBadge book={book} gradeBooks={gradeBooks} />
+        </SafeIsland>
       </div>
 
       {/* 续学 CTA —— 有未完成课程会话时出现 */}
       <div className="max-w-md lg:max-w-none mx-auto px-4 lg:px-0 pt-3 lg:pt-0 empty:hidden">
-        <ContinueLearningCard />
+        <SafeIsland><ContinueLearningCard /></SafeIsland>
       </div>
 
       {/* 移动端：课文听读 + 故事阅读小条 */}
@@ -101,8 +107,10 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         </div>
       )}
 
-      {/* 单元路径 —— 桌面端的课文/故事入口由 PathMap 的 topSlot 承载，随 sticky banner 一起吸附 */}
-      <BookPathSection bookId={bookId} outline={outline} book={book} />
+      {/* 单元路径 —— 客户端版带 PathMap 吸附；崩了回退到静态小节列表，绝不白屏 */}
+      <SafeIsland fallback={<StaticBookPath bookId={bookId} outline={outline} book={book} />}>
+        <BookPathSection bookId={bookId} outline={outline} book={book} />
+      </SafeIsland>
     </main>
     </AppShell>
   );

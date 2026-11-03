@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { SubjectBadge } from "@/components/SubjectBadge";
 import { InnerHeader } from "@/components/InnerHeader";
 import { AppShell } from "@/components/layout/AppShell";
+import SafeIsland from "@/components/SafeIsland";
 import type { BookStories, SiteIndex } from "@/types";
 import { StoryCard } from "./StoryCard";
 
@@ -75,7 +76,19 @@ export default async function StoryListPage({
             </div>
             <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3">
               {stories.map(s => (
-                <StoryCard key={s.id} story={s} bookId={bookId} />
+                <SafeIsland
+                  key={s.id}
+                  fallback={
+                    <a
+                      href={`/story/${bookId}__${s.id}/`}
+                      className="block rounded-2xl bg-white border border-bg-softer px-4 py-3"
+                    >
+                      <div className="text-sm font-bold text-ink truncate">{s.title}</div>
+                    </a>
+                  }
+                >
+                  <StoryCard story={s} bookId={bookId} />
+                </SafeIsland>
               ))}
             </div>
           </div>

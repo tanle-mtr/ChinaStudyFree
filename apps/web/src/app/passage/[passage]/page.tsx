@@ -3,6 +3,7 @@ import path from "path";
 import { notFound } from "next/navigation";
 import type { BookPassages, SiteIndex } from "@/types";
 import { PassageReader } from "@/components/PassageReader";
+import SafeIsland from "@/components/SafeIsland";
 
 async function getIndex(): Promise<SiteIndex> {
   const p = path.join(process.cwd(), "public", "data", "index.json");
@@ -44,5 +45,23 @@ export default async function ReadingPage({ params }: { params: Promise<{ passag
   if (!doc) notFound();
   const passage = doc.passages.find(p => p.id === passageId);
   if (!passage) notFound();
-  return <PassageReader passage={passage} backHref={`/reading/${bookId}/`} />;
+  return (
+    <SafeIsland
+      fallback={
+        <main className="min-h-screen max-w-2xl mx-auto px-5 py-8">
+          <a href={`/reading/${bookId}/`} className="text-sm font-bold text-primary">
+            ← 返回课文列表
+          </a>
+          <h1 className="mt-4 text-2xl font-extrabold text-ink">{passage.title}</h1>
+          <div className="mt-5 space-y-3 text-lg leading-relaxed text-ink">
+            {(passage.sentences ?? []).map((s: { text?: string }, i: number) => (
+              <p key={i}>{(s.text ?? "").trim() || "　"}</p>
+            ))}
+          </div>
+        </main>
+      }
+    >
+      <PassageReader passage={passage} backHref={`/reading/${bookId}/`} />
+    </SafeIsland>
+  );
 }

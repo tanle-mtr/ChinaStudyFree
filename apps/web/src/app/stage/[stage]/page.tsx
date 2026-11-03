@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { InnerHeader } from "@/components/InnerHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { StageVersionCard } from "@/components/StageVersionCard";
+import SafeIsland from "@/components/SafeIsland";
 import {
   STAGES,
   STAGE_BY_ID,
@@ -65,7 +66,9 @@ export default async function StagePage({
         />
         {/* 教材版本入口：选完学段后按科目选出版社版本（人教版 / 沪教版…内容不同） */}
         <div className="w-full max-w-3xl mx-auto mt-5">
-          <StageVersionCard stage={stage.id} />
+          <SafeIsland>
+            <StageVersionCard stage={stage.id} />
+          </SafeIsland>
         </div>
         <div className="w-full max-w-3xl mx-auto mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-5">
           {stage.grades.map(g => (
