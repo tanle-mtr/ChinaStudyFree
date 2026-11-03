@@ -54,6 +54,12 @@ const bootScript = `
   var __fails = [];
   function __diagRender() {
     if (document.getElementById("csf-diag")) return;
+    // 仅在「真正白屏」（正文几乎为空）时才弹浮层；React #418 这类自愈型
+    // 水合告警在内容成功重渲染后不应遮挡界面，否则反而像「没界面」。
+    try {
+      var bt = document.body ? String(document.body.innerText).replace(/\\s+/g, " ").trim() : "";
+      if (bt.length > 60) return;
+    } catch (e) {}
     var d = document.createElement("div");
     d.id = "csf-diag";
     d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:2147483647;" +
