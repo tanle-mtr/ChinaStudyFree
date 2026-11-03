@@ -37,9 +37,13 @@ export function HomeClient({ validBookIds }: HomeClientProps) {
   const lastStage = useProgressStore(s => s.lastStage);
   const selectedGrade = useProgressStore(s => s.selectedGrade);
   const activeBookId = useProgressStore(s => s.activeBookId);
-  const [hydrated, setHydrated] = useState(false);
+  const storeHydrated = useProgressStore(s => s.hasHydrated);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setHydrated(true), []);
+  useEffect(() => setMounted(true), []);
+  // 首帧用默认态（与预渲染一致），挂载且 store 回填完成后才按真实存档决策，
+  // 避免 skipHydration 模式下默认态误把老用户打回学段引导。
+  const ready = mounted && storeHydrated;
 
   /**
    * 生效学段（三级自愈，越往后越保守）：
@@ -54,7 +58,7 @@ export function HomeClient({ validBookIds }: HomeClientProps) {
     (selectedGrade != null ? stageOfGrade(selectedGrade) : null);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!ready) return;
     if (effectiveStage == null) return; // 交给 StagePicker
     // 一律 window.location.assign 硬跳转：静态导出（output: export + trailingSlash）
     // + 安卓 WebView 下 Next router 软导航偶发 404，会导致「选完学段打不开」。
@@ -75,10 +79,10 @@ export function HomeClient({ validBookIds }: HomeClientProps) {
     } else {
       window.location.assign(`/grade/${selectedGrade}/`);
     }
-  }, [hydrated, effectiveStage, selectedStage, lastStage, selectedGrade, activeBookId]);
+  }, [ready, effectiveStage, selectedStage, lastStage, selectedGrade, activeBookId]);
 
   // 跳转前渲染空底色占位，避免闪 StagePicker / GradePicker
-  if (!hydrated) {
+  if (!ready) {
     return <div className="min-h-screen bg-bg" />;
   }
   if (effectiveStage == null) {

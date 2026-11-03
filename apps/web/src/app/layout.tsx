@@ -7,6 +7,7 @@ import { ToastProvider } from "@/components/Toast";
 import { DailyRewardWatcher } from "@/components/DailyRewardWatcher";
 import { AchievementWatcher } from "@/components/AchievementWatcher";
 import { LeagueWatcher } from "@/components/LeagueWatcher";
+import { StoreHydrator } from "@/components/StoreHydrator";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const nunito = Nunito({
@@ -171,6 +172,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <ThemeProvider>
             <ToastProvider>
+              <StoreHydrator />
               <DailyRewardWatcher />
               <AchievementWatcher />
               <LeagueWatcher />

@@ -175,6 +175,9 @@ interface ProgressState {
   lastActiveDate: string; // YYYY-MM-DD
   completedLessons: Record<string, LessonResult>;
   mistakesBank: MistakeEntry[];
+  /** 持久化 store 是否已完成客户端回填（skipHydration 模式下由 StoreHydrator 触发）。
+   *  用于让依赖本机存档的组件（如首页跳转）等回填完成后再决策，避免默认态误跳转。 */
+  hasHydrated: boolean;
 
   // 偏好
   muted: boolean;
@@ -645,6 +648,7 @@ export const useProgressStore = create<ProgressState>()(
       lastActiveDate: "",
       completedLessons: {},
       mistakesBank: [],
+      hasHydrated: false,
       muted: false,
       autoNarrate: true,
 
@@ -1722,6 +1726,21 @@ export const useProgressStore = create<ProgressState>()(
       //            字段级容错：即使 selectedStage 被意外弄丢，首页也会用它恢复，
       //            不再把用户打回「重新选择学段」（迁移时还会用 stageOfGrade(selectedGrade) 反推治愈老档）
       version: 15,
+      // 🚩 关键修复：静态导出（SSG）下，若 persist 在客户端模块加载时同步读
+      // localStorage，首帧渲染会带上本机存档，与服务端预渲染的默认空状态不一致，
+      // 触发 React hydration mismatch（Minified error #418）→ React 丢弃服务端 DOM
+      // 改客户端重渲染，老版安卓 WebView 上重渲染崩溃即整页白屏。
+      // 改为跳过自动水合，挂载后再由 StoreHydrator 回填，首帧与预渲染严格一致。
+      skipHydration: true,
+      // rehydrate 完成后置位 hasHydrated，供组件判断存档是否就绪。
+      // 即使无本地存档（新用户）或读取出错，也置 true，避免组件永久等待。
+      onRehydrateStorage: () => () => {
+        try {
+          useProgressStore.setState({ hasHydrated: true });
+        } catch {
+          /* noop */
+        }
+      },
       migrate: (persistedState: unknown, fromVersion: number) => {
         const state = (persistedState as Partial<ProgressState>) ?? {};
         const starterOwned = Object.fromEntries(
