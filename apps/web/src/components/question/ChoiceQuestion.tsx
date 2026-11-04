@@ -31,7 +31,7 @@ export function ChoiceQuestion({
   locked = false,
 }: QuestionRendererProps) {
   const rawCorrect = question.answer.trim();
-  let correctLetter = rawCorrect.toUpperCase().charAt(0);
+  let correctLetter = rawCorrect.toUpperCase();
   // 若 answer 不是单字母 A-D，则在 options 里反查对应字母
   if (!/^[A-D]$/.test(correctLetter) && question.options?.length) {
     const cn = normalizeOpt(rawCorrect);
@@ -40,6 +40,8 @@ export function ChoiceQuestion({
       return normalizeOpt(o) === cn || normalizeOpt(stripped) === cn;
     });
     if (idx >= 0) correctLetter = String.fromCharCode(65 + idx);
+  } else {
+    correctLetter = correctLetter.charAt(0);
   }
   const [ripples, setRipples] = useState<Record<string, Ripple[]>>({});
   const idRef = useRef(0);

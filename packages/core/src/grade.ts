@@ -44,9 +44,9 @@ export function gradeAnswer(question: Question, userAnswer: string): boolean {
     }
 
     case "choice": {
-      // 答案可能是 "B"、"B. 60秒" 或直接存选项内容（如 "○○○○○○"）
+      // 答案可能是 "B"、"B. 60秒" 或直接存选项内容（如 "an"）
       const u = userAnswer.trim().toUpperCase().charAt(0);
-      let c = correct.trim().toUpperCase().charAt(0);
+      let c = correct.trim().toUpperCase();
       // 若 answer 不是单个字母 A-D，则在 options 里反查下标
       if (!/^[A-D]$/.test(c) && question.options && question.options.length) {
         const cn = normalize(correct);
@@ -56,7 +56,7 @@ export function gradeAnswer(question: Question, userAnswer: string): boolean {
         });
         if (idx >= 0) c = String.fromCharCode(65 + idx);
       }
-      return u === c;
+      return u === c.charAt(0);
     }
 
     case "fill_blank":
