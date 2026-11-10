@@ -10,6 +10,7 @@
   "scripts": {
     "build:data": "npm run build:data --workspace=china-study-free",
     "build:web": "npm run build --workspace=china-study-free",
+    "build:lite": "node apps/lite/build.mjs",
     "build:server": "npm run build --workspace=china-study-free-server",
     "dev:web": "npm run dev --workspace=china-study-free",
     "dev:server": "npm run dev --workspace=china-study-free-server",
@@ -24,8 +25,8 @@
     "tts:audio": "node scripts/tts/generate-audio.mjs",
     "tts:audio:dry": "node scripts/tts/generate-audio.mjs --dry-run",
     "package:offline": "bash scripts/package-offline.sh",
-    "sync:android": "npx @capacitor/cli sync android",
-    "sync:ios": "npx @capacitor/cli sync ios",
+    "sync:android": "npm run sync:android --workspace=china-study-free-mobile",
+    "sync:ios": "npm run sync:ios --workspace=china-study-free-mobile",
     "icons:android": "python scripts/gen-android-icons.py"
   },
   "dependencies": {

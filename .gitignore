@@ -13,6 +13,9 @@ data/
 # Server build
 apps/server/dist/
 
+# 全新静态前端产物（由 `npm run build:lite` 重建，3576 个 HTML / 30M）
+apps/lite/dist/
+
 # 环境变量
 .env
 .env.local
