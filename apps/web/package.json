@@ -24,7 +24,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.7",
+    "@types/node": "^26.6.5",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "@types/react-katex": "^3.0.4",
