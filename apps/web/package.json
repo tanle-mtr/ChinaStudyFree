@@ -34,6 +34,6 @@
     "autoprefixer": "^10.4.20",
     "tsx": "^4.19.2",
     "eslint": "^9.18.0",
-    "eslint-config-next": "^15.1.6"
+    "eslint-config-next": "^16.4.1"
   }
 }
