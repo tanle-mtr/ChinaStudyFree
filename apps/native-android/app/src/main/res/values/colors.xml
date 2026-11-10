@@ -1,21 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#FFF5F9FD</color>
-    <color name="card">#FFFFFFFF</color>
-    <color name="brand">#FF58A700</color>
-    <color name="brandDark">#FF3D7800</color>
-    <color name="brandPale">#FFEAF7D8</color>
-    <color name="blue">#FF1CB0F6</color>
-    <color name="bluePale">#FFE3F4FE</color>
-    <color name="orange">#FFFF9600</color>
-    <color name="orangePale">#FFFFF0DC</color>
-    <color name="purple">#FF9069CD</color>
-    <color name="purplePale">#FFF1EAFB</color>
-    <color name="ink">#FF22303C</color>
-    <color name="inkLight">#FF6B7A88</color>
-    <color name="line">#FFE2EAF1</color>
-    <color name="correct">#FF2E9E4F</color>
-    <color name="correctPale">#FFE4F6E9</color>
-    <color name="wrong">#FFE2483D</color>
-    <color name="wrongPale">#FFFDE9E7</color>
+    <!-- ===== Duolingo 动物色板（与 web tailwind 一致） ===== -->
+    <color name="feather">#58CC02</color>      <!-- 主绿 -->
+    <color name="treeFrog">#58A700</color>     <!-- 按钮底部阴影 / 按下深色 -->
+    <color name="maskGreen">#89E219</color>    <!-- 高亮绿 -->
+    <color name="macaw">#1CB0F6</color>        <!-- 主蓝 -->
+    <color name="whale">#1899D6</color>        <!-- 蓝阴影 -->
+    <color name="iguana">#BBE7FC</color>       <!-- 浅蓝 -->
+    <color name="humpback">#235390</color>     <!-- 深海蓝 文本 -->
+    <color name="sea">#14D4F4</color>          <!-- 青绿 -->
+    <color name="cardinal">#FF4B4B</color>     <!-- 主红 -->
+    <color name="fire">#EA2B2B</color>         <!-- 红阴影 -->
+    <color name="walkingFish">#FFC1C1</color>
+    <color name="bee">#FFC800</color>          <!-- 主黄 / 宝石备用 -->
+    <color name="canary">#FFDE00</color>
+    <color name="fox">#FF9600</color>          <!-- 橙 -->
+    <color name="beetle">#CE82FF</color>       <!-- 紫 -->
+    <color name="snow">#FFFFFF</color>
+    <color name="polar">#F7F7F7</color>        <!-- 页面背景 -->
+    <color name="swan">#E5E5E5</color>         <!-- 边框/嵌入面 -->
+    <color name="hare">#AFAFAF</color>         <!-- ink softer -->
+    <color name="wolf">#777777</color>         <!-- ink light -->
+    <color name="eel">#4B4B4B</color>          <!-- ink 文本 -->
+
+    <!-- ===== 语义别名（与 web 一致） ===== -->
+    <color name="primary">#58CC02</color>
+    <color name="primaryDark">#58A700</color>
+    <color name="primaryLight">#89E219</color>
+    <color name="secondary">#1CB0F6</color>
+    <color name="secondaryDark">#1899D6</color>
+    <color name="danger">#FF4B4B</color>
+    <color name="dangerDark">#EA2B2B</color>
+    <color name="warning">#FFC800</color>
+    <color name="warningDark">#E0A800</color>
+    <color name="gem">#1CB0F6</color>
+    <color name="ink">#4B4B4B</color>
+    <color name="inkLight">#777777</color>
+    <color name="inkSofter">#AFAFAF</color>
+
+    <!-- ===== 背景层级 ===== -->
+    <color name="bg">#FFFFFF</color>           <!-- 卡片 -->
+    <color name="bgSoft">#F7F7F7</color>       <!-- 页面背景 -->
+    <color name="bgSofter">#E5E5E5</color>     <!-- 边框/厚阴影色 -->
+    <color name="line">#E5E5E5</color>
+
+    <!-- ===== 兼容性（v3 旧 id，保留避免重复定义） ===== -->
+    <color name="card">#FFFFFF</color>
+    <color name="brand">#58A700</color>
+    <color name="brandDark">#3D7800</color>
+    <color name="brandPale">#EAF7D8</color>
+    <color name="blue">#1CB0F6</color>
+    <color name="bluePale">#E3F4FE</color>
+    <color name="orange">#FF9600</color>
+    <color name="orangePale">#FFF0DC</color>
+    <color name="purple">#9069CD</color>
+    <color name="purplePale">#F1EAFB</color>
+    <color name="correct">#2E9E4F</color>
+    <color name="correctDark">#1F7A3C</color>
+    <color name="correctPale">#E4F6E9</color>
+    <color name="wrong">#E2483D</color>
+    <color name="wrongPale">#FDE9E7</color>
+
+    <!-- ===== 学科配色（subjects.ts 同义） ===== -->
+    <color name="subjMath">#58CC02</color>
+    <color name="subjChinese">#FF4B4B</color>
+    <color name="subjEnglish">#1CB0F6</color>
+    <color name="subjScience">#FFC800</color>
+    <color name="subjMoral">#1CB0F6</color>
+    <color name="subjPhysics">#1CB0F6</color>
+    <color name="subjChemistry">#CE82FF</color>
+    <color name="subjBiology">#58CC02</color>
+    <color name="subjHistory">#FF9600</color>
+    <color name="subjGeography">#14D4F4</color>
+    <color name="subjPolitics">#FF4B4B</color>
+    <color name="subjComputer">#235390</color>
+
+    <!-- ===== 学段配色（stage.ts 同义） ===== -->
+    <color name="stagePrimary">#58CC02</color>
+    <color name="stageMiddle">#1CB0F6</color>
+    <color name="stageHigh">#FF4B4B</color>
+    <color name="stageCollege">#FFC800</color>
+
+    <!-- ===== 深色 night 色板 ===== -->
+    <color name="nightBg">#131F24</color>
+    <color name="nightSurface">#202F36</color>
+    <color name="nightBorder">#37464F</color>
+
+    <!-- ===== 联赛段位色 ===== -->
+    <color name="tierBronze">#CD7F32</color>
+    <color name="tierSilver">#A8B8C8</color>
+    <color name="tierGold">#FFC800</color>
+    <color name="tierSapphire">#1CB0F6</color>
+    <color name="tierRuby">#E0115F</color>
+    <color name="tierDiamond">#54D7EC</color>
 </resources>

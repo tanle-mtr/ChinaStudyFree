@@ -23,6 +23,12 @@
         <activity android:name=".GradeActivity" android:configChanges="orientation|screenSize|uiMode" />
         <activity android:name=".BookActivity" android:configChanges="orientation|screenSize|uiMode" />
         <activity android:name=".LessonActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".ReviewActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".LeagueActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".ShopActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".ProfileActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".AchievementsActivity" android:configChanges="orientation|screenSize|uiMode" />
+        <activity android:name=".SettingsActivity" android:configChanges="orientation|screenSize|uiMode" />
     </application>
 
 </manifest>
