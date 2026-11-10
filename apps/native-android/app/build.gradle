@@ -1,0 +1,50 @@
+apply plugin: 'com.android.application'
+
+// 复用仓库已有的发布密钥，保证新包可以直接覆盖安装旧版本（同包名 + 同签名）。
+def keystorePropsFile = rootProject.file('keystore.properties')
+def hasReleaseKeystore = keystorePropsFile.exists()
+def keystoreProps = new Properties()
+if (hasReleaseKeystore) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
+android {
+    namespace 'com.chinastudyfree.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.chinastudyfree.app'
+        minSdk 23
+        targetSdk 34
+        versionCode 8
+        versionName '3.0.0'
+    }
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            release {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // 刻意留空：只用 Android framework API（android.widget + org.json）。
+    // 无 WebView、无 Capacitor、无 AndroidX、无 Kotlin/Compose、无网络库。
+}

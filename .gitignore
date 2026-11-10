@@ -43,6 +43,15 @@ tools/
 # 内嵌 Node 侧车（84MB，另行放置；package-desktop.sh 从此目录复制）
 apps/desktop/src-tauri/bin/
 
+# 纯原生安卓工程：构建产物 / 本机 SDK 配置 / 发布密钥不进仓库
+# （assets/data 由 prepare-data.mjs 重建，且已被上面的 data/ 规则覆盖）
+apps/native-android/.gradle/
+apps/native-android/build/
+apps/native-android/app/build/
+apps/native-android/local.properties
+apps/native-android/keystore.properties
+apps/native-android/keystore/
+
 # 系统
 .DS_Store
 Thumbs.db

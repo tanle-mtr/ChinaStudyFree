@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FFF5F9FD</color>
+    <color name="card">#FFFFFFFF</color>
+    <color name="brand">#FF58A700</color>
+    <color name="brandDark">#FF3D7800</color>
+    <color name="brandPale">#FFEAF7D8</color>
+    <color name="blue">#FF1CB0F6</color>
+    <color name="bluePale">#FFE3F4FE</color>
+    <color name="orange">#FFFF9600</color>
+    <color name="orangePale">#FFFFF0DC</color>
+    <color name="purple">#FF9069CD</color>
+    <color name="purplePale">#FFF1EAFB</color>
+    <color name="ink">#FF22303C</color>
+    <color name="inkLight">#FF6B7A88</color>
+    <color name="line">#FFE2EAF1</color>
+    <color name="correct">#FF2E9E4F</color>
+    <color name="correctPale">#FFE4F6E9</color>
+    <color name="wrong">#FFE2483D</color>
+    <color name="wrongPale">#FFFDE9E7</color>
+</resources>

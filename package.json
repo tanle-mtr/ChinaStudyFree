@@ -11,6 +11,8 @@
     "build:data": "npm run build:data --workspace=china-study-free",
     "build:web": "npm run build --workspace=china-study-free",
     "build:lite": "node apps/lite/build.mjs",
+    "build:native:data": "node apps/native-android/prepare-data.mjs",
+    "build:native": "node apps/native-android/prepare-data.mjs && cd apps/native-android && gradlew assembleRelease",
     "build:server": "npm run build --workspace=china-study-free-server",
     "dev:web": "npm run dev --workspace=china-study-free",
     "dev:server": "npm run dev --workspace=china-study-free-server",
