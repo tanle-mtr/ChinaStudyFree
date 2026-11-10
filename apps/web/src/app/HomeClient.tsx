@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useProgressStore } from "@/store/progress";
 import { GradePicker } from "@/components/GradePicker";
 import { StagePicker } from "@/components/StagePicker";
+import { StaticGradeGrid } from "@/components/StaticGradeGrid";
 import { stageOfGrade, type StageId } from "@cstf/core/stage";
 
 interface HomeClientProps {
@@ -32,7 +33,15 @@ interface HomeClientProps {
  *     首页仍会用它恢复，绝不把用户打回学段引导；
  *   - 若学段字段全丢但还记得年级，用 stageOfGrade(grade) 反推（自愈）。
  */
-export function HomeClient({ validBookIds }: HomeClientProps) {
+export function HomeClient({
+  grades,
+  byGrade,
+  totalBooks,
+  totalLessons,
+  totalQuestions,
+  validBookIds,
+}: HomeClientProps) {
+  void byGrade; // 预留：年级→书本数映射，当前静态入口未逐年级展示计数
   const selectedStage = useProgressStore(s => s.selectedStage);
   const lastStage = useProgressStore(s => s.lastStage);
   const selectedGrade = useProgressStore(s => s.selectedGrade);
@@ -81,9 +90,19 @@ export function HomeClient({ validBookIds }: HomeClientProps) {
     }
   }, [ready, effectiveStage, selectedStage, lastStage, selectedGrade, activeBookId]);
 
-  // 跳转前渲染空底色占位，避免闪 StagePicker / GradePicker
+  // 跳转前 / 预渲染阶段：渲染纯静态年级入口网格。
+  // 关键：这段 HTML 在服务端就被渲染成可见内容（无 framer 动画、无 JS 依赖），
+  // 即使 JS 在老 WebView 上完全不执行，首页也绝不会是白屏。
+  // 服务端首帧与客户端首帧都渲染它 → 严格一致，不会触发 hydration mismatch。
   if (!ready) {
-    return <div className="min-h-screen bg-bg" />;
+    return (
+      <StaticGradeGrid
+        grades={grades}
+        totalBooks={totalBooks}
+        totalLessons={totalLessons}
+        totalQuestions={totalQuestions}
+      />
+    );
   }
   if (effectiveStage == null) {
     return <StagePicker />;
