@@ -111,11 +111,10 @@ public class GradeActivity extends BaseActivity {
     protected LinearLayout makeBarTrack() {
         LinearLayout track = new LinearLayout(this);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackgroundColor(Ui.color(this, R.color.swan));
         int h = Ui.dp(this, 12);
         track.setLayoutParams(Ui.lpMatch());
         track.getLayoutParams().height = h;
-        ((android.graphics.drawable.GradientDrawable) track.getBackground()).setCornerRadius(Ui.dp(this, 6));
+        track.setBackground(Ui.round(Ui.color(this, R.color.swan), Ui.dp(this, 6)));
         return track;
     }
     protected View makeBarFill(int colorRes) {

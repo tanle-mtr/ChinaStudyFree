@@ -351,12 +351,11 @@ public final class Ui {
     public static LinearLayout progressBar(Context c, float frac, int fillRes) {
         LinearLayout track = new LinearLayout(c);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackgroundColor(color(c, R.color.swan));
         int h = dp(c, 12);
         LinearLayout.LayoutParams lp = lpMatch();
         track.setLayoutParams(lp);
         track.getLayoutParams().height = h;
-        ((GradientDrawable) track.getBackground()).setCornerRadius(dp(c, 6));
+        track.setBackground(round(color(c, R.color.swan), dp(c, 6)));
         View fill = new View(c);
         fill.setBackgroundColor(color(c, fillRes));
         float f = Math.max(0f, Math.min(1f, frac));

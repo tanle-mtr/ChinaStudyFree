@@ -198,12 +198,11 @@ public class MainActivity extends BaseActivity {
     private LinearLayout barTrack() {
         LinearLayout track = new LinearLayout(this);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackgroundColor(Ui.color(this, R.color.swan));
         int h = Ui.dp(this, 12);
         track.setLayoutParams(Ui.lpMatch());
         ((LinearLayout.LayoutParams) track.getLayoutParams()).setMargins(0, 0, 0, 0);
         track.getLayoutParams().height = h;
-        ((GradientDrawable) track.getBackground()).setCornerRadius(Ui.dp(this, 6));
+        track.setBackground(Ui.round(Ui.color(this, R.color.swan), Ui.dp(this, 6)));
         return track;
     }
     private View barFill(int colorRes) {

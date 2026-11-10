@@ -86,11 +86,10 @@ public class LessonActivity extends Activity {
 
         LinearLayout track = new LinearLayout(this);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackgroundColor(Ui.color(this, R.color.swan));
         int h = Ui.dp(this, 14);
         track.setLayoutParams(Ui.lpWeight(1f));
         ((LinearLayout.LayoutParams) track.getLayoutParams()).height = h;
-        ((GradientDrawable) track.getBackground()).setCornerRadius(Ui.dp(this, 7));
+        track.setBackground(Ui.round(Ui.color(this, R.color.swan), Ui.dp(this, 7)));
         progressFill = new View(this);
         progressFill.setBackgroundColor(Ui.color(this, R.color.primary));
         progressFill.setLayoutParams(new LinearLayout.LayoutParams(0, h, 0f));

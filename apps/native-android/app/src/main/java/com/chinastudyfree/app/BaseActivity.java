@@ -118,10 +118,9 @@ public abstract class BaseActivity extends Activity {
 
         LinearLayout track = new LinearLayout(this);
         track.setOrientation(LinearLayout.HORIZONTAL);
-        track.setBackgroundColor(Ui.color(this, R.color.swan));
         int barH = Ui.dp(this, 14);
         track.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, barH));
-        ((GradientDrawable) track.getBackground()).setCornerRadius(Ui.dp(this, 7));
+        track.setBackground(Ui.round(Ui.color(this, R.color.swan), Ui.dp(this, 7)));
         hudXpFill = new View(this);
         hudXpFill.setBackgroundColor(Ui.color(this, R.color.primary));
         hudXpFill.setLayoutParams(new LinearLayout.LayoutParams(0, barH, 0f));
