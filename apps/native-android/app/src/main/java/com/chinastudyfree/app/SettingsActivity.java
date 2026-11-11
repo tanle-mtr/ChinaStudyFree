@@ -1,11 +1,7 @@
 package com.chinastudyfree.app;
 
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -30,7 +26,7 @@ public class SettingsActivity extends BaseActivity {
         }));
 
         // 每日目标
-        LinearLayout goalCard = Ui.card(this, R.color.card, 14);
+        LinearLayout goalCard = Ui.rowCard(this, R.color.card, 14);
         goalCard.setBackground(Ui.roundStroke(Ui.color(this, R.color.card),
                 Ui.color(this, R.color.line), Ui.dp(this, 2), Ui.dp(this, 14)));
         TextView gt = Ui.tv(this, "🎯 每日目标", 16, R.color.ink, true);
@@ -58,7 +54,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private LinearLayout toggleRow(String label, String desc, boolean on, View.OnClickListener flip) {
-        LinearLayout card = Ui.card(this, R.color.card, 14);
+        LinearLayout card = Ui.rowCard(this, R.color.card, 14);
         card.setBackground(Ui.roundStroke(Ui.color(this, R.color.card),
                 Ui.color(this, R.color.line), Ui.dp(this, 2), Ui.dp(this, 14)));
         LinearLayout left = new LinearLayout(this);
@@ -81,11 +77,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void confirmReset() {
-        final android.app.Dialog d = new android.app.Dialog(this);
-        d.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        LinearLayout dim = new LinearLayout(this);
-        dim.setBackgroundColor(Color.argb(140, 0, 0, 0));
-        dim.setGravity(Gravity.CENTER);
+        if (isFinishing() || isDestroyed()) return;
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackgroundColor(Ui.color(this, R.color.card));
@@ -99,21 +91,15 @@ public class SettingsActivity extends BaseActivity {
         yes.setOnClickListener(v -> {
             P.resetAll();
             Ui.toast(this, "已重置");
-            d.dismiss();
+            dismissCurrent();
             rebuild();
         });
         card.addView(yes);
         card.addView(Ui.gap(this, 8));
         TextView no = Ui.ghostButton(this, "取消", R.color.wolf);
-        no.setOnClickListener(v -> d.dismiss());
+        no.setOnClickListener(v -> dismissCurrent());
         card.addView(no);
-        dim.addView(card);
-        d.setContentView(dim);
-        if (d.getWindow() != null) {
-            d.getWindow().setBackgroundDrawable(new GradientDrawable());
-            d.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        }
-        d.show();
+        showDialog(card, true); // 走统一弹窗，受 onPause 保护，避免窗口泄漏
     }
 
     private TextView centered(String s, float sp, int colorRes, boolean bold) {

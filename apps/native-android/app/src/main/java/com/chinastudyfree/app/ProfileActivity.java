@@ -61,7 +61,7 @@ public class ProfileActivity extends BaseActivity {
     }
 
     private LinearLayout menuRow(String label, android.view.View.OnClickListener onClick) {
-        LinearLayout card = Ui.card(this, R.color.card, 14);
+        LinearLayout card = Ui.rowCard(this, R.color.card, 14);
         card.setBackground(Ui.roundStroke(Ui.color(this, R.color.card),
                 Ui.color(this, R.color.line), Ui.dp(this, 2), Ui.dp(this, 14)));
         TextView t = Ui.tv(this, label, 16, R.color.ink, true);

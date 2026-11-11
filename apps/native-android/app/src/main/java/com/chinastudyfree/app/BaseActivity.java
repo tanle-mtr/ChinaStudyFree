@@ -30,7 +30,7 @@ public abstract class BaseActivity extends Activity {
     protected LinearLayout contentArea;
 
     private TextView hudHearts, hudGems, hudStreak, hudXpText;
-    private View hudXpFill;
+    private View hudXpFill, hudXpSpacer;
     protected Dialog currentDialog;
 
     protected boolean useHud() { return true; }
@@ -55,6 +55,13 @@ public abstract class BaseActivity extends Activity {
         setContentView(buildRoot());
         refreshHud();
         maybeShowPendingDialogs();
+    }
+
+    @Override
+    protected void onPause() {
+        // 必须先关弹窗再让 Activity 退到后台 / finish，否则窗口会泄漏
+        dismissCurrent();
+        super.onPause();
     }
 
     // ===================== 外壳构建 =====================
@@ -124,10 +131,10 @@ public abstract class BaseActivity extends Activity {
         hudXpFill = new View(this);
         hudXpFill.setBackgroundColor(Ui.color(this, R.color.primary));
         hudXpFill.setLayoutParams(new LinearLayout.LayoutParams(0, barH, 0f));
-        View spacer = new View(this);
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, barH, 1f));
+        hudXpSpacer = new View(this);
+        hudXpSpacer.setLayoutParams(new LinearLayout.LayoutParams(0, barH, 1f));
         track.addView(hudXpFill);
-        track.addView(spacer);
+        track.addView(hudXpSpacer);
         bar.addView(track);
 
         View line = new View(this);
@@ -202,16 +209,23 @@ public abstract class BaseActivity extends Activity {
         if (hudXpText != null) {
             int today = P.getTodayXp(), goal = P.getDailyGoal();
             hudXpText.setText("今日 XP " + today + " / " + goal);
-            float pct = goal > 0 ? Math.min(1f, (float) today / goal) : 0f;
+            float pct = goal > 0 ? Math.min(1f, Math.max(0f, (float) today / goal)) : 0f;
             if (hudXpFill != null) {
                 ((LinearLayout.LayoutParams) hudXpFill.getLayoutParams()).weight = pct;
                 hudXpFill.requestLayout();
+            }
+            if (hudXpSpacer != null) {
+                ((LinearLayout.LayoutParams) hudXpSpacer.getLayoutParams()).weight = 1f - pct;
+                hudXpSpacer.requestLayout();
             }
         }
     }
 
     // ===================== 通用弹窗 =====================
     protected Dialog showDialog(View card, boolean outsideDismiss) {
+        // Activity 正在结束时弹窗会抛 BadTokenException / 造成 WindowLeaked
+        if (isFinishing() || isDestroyed()) return null;
+        dismissCurrent(); // 任何情况下都不叠加第二层弹窗
         final Dialog d = new Dialog(this);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         FrameLayout dim = new FrameLayout(this);
@@ -254,9 +268,9 @@ public abstract class BaseActivity extends Activity {
         JSONObject sm = P.getPendingStreakMilestone();
         if (sm != null) { showStreakMilestone(sm); return; }
         int done = P.getCompletedLessonCount();
-        int chestAt = done / Progress.CHEST_EVERY_N_LESSONS;
-        if (done >= Progress.CHEST_EVERY_N_LESSONS && chestAt > 0) {
-            String cid = "c" + (chestAt * Progress.CHEST_EVERY_N_LESSONS);
+        // 遍历所有应得宝箱：跨过多个 5 的倍数时不能只弹最后一个，否则会丢宝箱
+        for (int n = Progress.CHEST_EVERY_N_LESSONS; n <= done; n += Progress.CHEST_EVERY_N_LESSONS) {
+            String cid = "c" + n;
             if (!P.chestClaimed(cid)) { showChest(cid); return; }
         }
         if (!P.dailyRewardClaimedToday()) { showDailyReward(); }
@@ -279,8 +293,11 @@ public abstract class BaseActivity extends Activity {
     }
 
     private void showChest(final String cid) {
-        Random rnd = new Random();
-        Progress.ChestReward r = Progress.rollChestReward(rnd);
+        // 显示即结算落盘：避免「不点领取就返回」后 onResume 重新随机刷出史诗奖励
+        if (!P.claimChest(cid)) return;
+        Progress.ChestReward r = Progress.rollChestReward(new Random());
+        P.addGems(r.gems);
+        P.save();
         LinearLayout card = dialogCard(this);
         card.addView(centeredText(this, "🎉 恭喜获得宝箱！", 20, R.color.ink, true));
         card.addView(Ui.gap(this, 8));
@@ -290,14 +307,8 @@ public abstract class BaseActivity extends Activity {
         card.addView(centeredText(this, tierName + "宝箱", 16, R.color.warning, true));
         card.addView(centeredText(this, "💎 +" + r.gems, 30, R.color.secondary, true));
         card.addView(Ui.gap(this, 18));
-        TextView ok = Ui.button(this, "领取", R.color.primary, R.color.primaryDark, R.color.card, 17);
-        ok.setOnClickListener(v -> {
-            P.claimChest(cid);
-            P.addGems(r.gems);
-            P.save();
-            refreshHud();
-            dismissCurrent();
-        });
+        TextView ok = Ui.button(this, "收下", R.color.primary, R.color.primaryDark, R.color.card, 17);
+        ok.setOnClickListener(v -> { refreshHud(); dismissCurrent(); });
         card.addView(ok);
         showDialog(card, false);
     }
@@ -305,6 +316,7 @@ public abstract class BaseActivity extends Activity {
     private void showStreakMilestone(JSONObject sm) {
         int streak = sm.optInt("streak", 0);
         int gems = sm.optInt("gems", 0);
+        P.clearPendingStreakMilestone(); // 显示即消费，避免返回键关掉后重复弹
         LinearLayout card = dialogCard(this);
         card.addView(centeredText(this, "🔥 连胜 " + streak + " 天！", 22, R.color.fox, true));
         card.addView(Ui.gap(this, 10));
@@ -312,7 +324,7 @@ public abstract class BaseActivity extends Activity {
         card.addView(centeredText(this, "💎 +" + gems, 30, R.color.secondary, true));
         card.addView(Ui.gap(this, 18));
         TextView ok = Ui.button(this, "太棒了", R.color.primary, R.color.primaryDark, R.color.card, 17);
-        ok.setOnClickListener(v -> { P.clearPendingStreakMilestone(); P.save(); dismissCurrent(); });
+        ok.setOnClickListener(v -> { refreshHud(); dismissCurrent(); });
         card.addView(ok);
         showDialog(card, false);
     }
@@ -323,6 +335,7 @@ public abstract class BaseActivity extends Activity {
         boolean demoted = lr.optBoolean("demoted", false);
         int gems = lr.optInt("gems", 0);
         int rank = lr.optInt("rank", 0);
+        P.clearPendingLeagueResult(); // 显示即消费，避免返回键关掉后重复弹
         String title = promoted ? "🏆 晋级！" : (demoted ? "📉 遗憾降级" : "本周联赛结束");
         LinearLayout card = dialogCard(this);
         card.addView(centeredText(this, title, 20, R.color.ink, true));
@@ -333,7 +346,7 @@ public abstract class BaseActivity extends Activity {
         if (gems > 0) card.addView(centeredText(this, "💎 +" + gems, 28, R.color.secondary, true));
         card.addView(Ui.gap(this, 18));
         TextView ok = Ui.button(this, "知道了", R.color.primary, R.color.primaryDark, R.color.card, 17);
-        ok.setOnClickListener(v -> { P.clearPendingLeagueResult(); P.save(); dismissCurrent(); });
+        ok.setOnClickListener(v -> { refreshHud(); dismissCurrent(); });
         card.addView(ok);
         showDialog(card, false);
     }

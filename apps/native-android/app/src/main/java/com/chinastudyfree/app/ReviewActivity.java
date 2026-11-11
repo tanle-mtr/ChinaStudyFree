@@ -72,7 +72,7 @@ public class ReviewActivity extends BaseActivity {
         card.addView(Ui.tv(this, q == null ? "" : q.optString("q", ""), 16, R.color.ink, false));
         card.addView(Ui.gap(this, 8));
 
-        final JSONArray opts = q == null ? new JSONArray() : q.optJSONArray("opts");
+        final JSONArray opts = Data.arr(q, "opts"); // 缺字段时返回空数组，避免 NPE
         String type = q == null ? "" : q.optString("type", "");
         if ("choice".equals(type)) {
             for (int k = 0; k < opts.length(); k++) {
@@ -94,11 +94,14 @@ public class ReviewActivity extends BaseActivity {
         TextView wrong = Ui.button(this, "答错了", R.color.cardinal, R.color.dangerDark, R.color.card, 15);
         wrong.setLayoutParams(Ui.lpWeight(1f));
         actions.addView(right);
-        actions.addView(Ui.gap(this, 8));
+        actions.addView(Ui.hgap(this, 8));
         actions.addView(wrong);
         card.addView(actions);
 
+        final boolean[] marked = {false}; // 防重复点击导致重复计分
         View.OnClickListener mark = v -> {
+            if (marked[0]) return;
+            marked[0] = true;
             boolean correct = (v == right);
             P.reviewMistake(e.optString("lessonId", ""), q == null ? -1 : q.optInt("id", -1), correct);
             P.save();

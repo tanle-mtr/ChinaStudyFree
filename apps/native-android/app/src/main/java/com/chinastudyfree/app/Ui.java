@@ -73,11 +73,34 @@ public final class Ui {
         return l;
     }
 
+    /** 垂直容器里的行间距：宽 MATCH_PARENT，高 dp。切勿用于水平容器。 */
     public static View gap(Context c, int dp) {
         View v = new View(c);
         v.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(c, dp)));
         return v;
+    }
+
+    /** 水平容器里的列间距：宽 dp，高 0（不影响行高）。 */
+    public static View hgap(Context c, int dp) {
+        View v = new View(c);
+        v.setLayoutParams(new LinearLayout.LayoutParams(dp(c, dp), 0));
+        return v;
+    }
+
+    /** 横向圆角卡片（rankRow / menuRow / toggleRow 等「一行多列」场景）。
+     *  与 card() 的区别：orientation 为 HORIZONTAL，子项可用 lpWeight()。 */
+    public static LinearLayout rowCard(Context c, int fillRes, int padDp) {
+        LinearLayout l = new LinearLayout(c);
+        l.setOrientation(LinearLayout.HORIZONTAL);
+        l.setGravity(Gravity.CENTER_VERTICAL);
+        int p = dp(c, padDp);
+        l.setPadding(p, p, p, p);
+        l.setBackground(round(color(c, fillRes), dp(c, 14)));
+        LinearLayout.LayoutParams lp = lpMatch();
+        lp.setMargins(0, 0, 0, dp(c, 10));
+        l.setLayoutParams(lp);
+        return l;
     }
 
     public static View divider(Context c) {
@@ -309,12 +332,6 @@ public final class Ui {
         bar.setBackgroundColor(color(c, R.color.card));
         bar.setPadding(0, dp(c, 6), 0, dp(c, 6));
         int h = dp(c, 56);
-        // 顶部描边
-        View topLine = new View(c);
-        topLine.setBackgroundColor(color(c, R.color.line));
-        // 用 FrameLayout 包裹以加顶线
-        FrameLayout wrap = new FrameLayout(c);
-        wrap.setBackgroundColor(color(c, R.color.card));
         for (int i = 0; i < NAV_IDS.length; i++) {
             final String id = NAV_IDS[i];
             LinearLayout item = new LinearLayout(c);

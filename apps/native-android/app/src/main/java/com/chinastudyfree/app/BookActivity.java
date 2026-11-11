@@ -58,7 +58,9 @@ public class BookActivity extends BaseActivity {
         c.addView(info);
 
         JSONArray units = Data.arr(book, "units");
-        boolean prevDone = true;
+        // 与 web BookPathView 一致：已完成的课任意重玩；只有「第一节未完成课」可点（current），
+        // 其后所有未完成课一律 locked。不能把「已解锁」继续传给下一节，否则全教材一次性解锁。
+        boolean foundCurrent = false;
         for (int u = 0; u < units.length(); u++) {
             JSONObject unit = units.optJSONObject(u);
             if (unit == null) continue;
@@ -69,10 +71,9 @@ public class BookActivity extends BaseActivity {
                 if (L == null) continue;
                 final String id = Data.s(L, "id");
                 boolean isDone = P.isLessonDone(id);
-                boolean unlocked = (k == 0 && u == 0) || isDone || prevDone;
+                boolean unlocked = isDone || !foundCurrent;
                 c.addView(lessonNode(L, isDone, unlocked));
-                if (isDone) prevDone = true;
-                else prevDone = unlocked; // 未完成但已解锁则下一节也可点（保持 web 的连续解锁）
+                if (!isDone) foundCurrent = true;
             }
         }
     }
@@ -120,10 +121,10 @@ public class BookActivity extends BaseActivity {
         TextView qc = Ui.tv(this, Data.questionCount(L) + " 题", 13, R.color.inkLight, false);
         sub.addView(qc);
         if (isDone) {
-            sub.addView(Ui.gap(this, 10));
+            sub.addView(Ui.hgap(this, 10));
             sub.addView(Ui.stars(this, P.getStars(id), 3));
         } else if (!unlocked) {
-            sub.addView(Ui.gap(this, 10));
+            sub.addView(Ui.hgap(this, 10));
             sub.addView(Ui.tv(this, "未解锁", 13, R.color.hare, false));
         }
         card.addView(sub);

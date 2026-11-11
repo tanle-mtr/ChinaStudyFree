@@ -55,7 +55,7 @@ public class LeagueActivity extends BaseActivity {
 
     private LinearLayout rankRow(Progress.LeagueRow r, int rank) {
         int bg = r.isUser ? R.color.brandPale : R.color.card;
-        LinearLayout card = Ui.card(this, bg, 12);
+        LinearLayout card = Ui.rowCard(this, bg, 12);
         card.setBackground(Ui.roundStroke(Ui.color(this, bg),
                 r.isUser ? Ui.color(this, R.color.primary) : Ui.color(this, R.color.line),
                 Ui.dp(this, 2), Ui.dp(this, 12)));

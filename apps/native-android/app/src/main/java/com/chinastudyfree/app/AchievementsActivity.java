@@ -29,7 +29,7 @@ public class AchievementsActivity extends BaseActivity {
 
         for (String[] a : Progress.ACHIEVEMENTS) {
             boolean got = ua.optBoolean(a[0], false);
-            LinearLayout card = Ui.card(this, R.color.card, 14);
+            LinearLayout card = Ui.rowCard(this, R.color.card, 14);
             card.setBackground(Ui.roundStroke(Ui.color(this, R.color.card),
                     got ? Ui.color(this, R.color.beetle) : Ui.color(this, R.color.line),
                     Ui.dp(this, 2), Ui.dp(this, 14)));

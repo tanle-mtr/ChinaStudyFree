@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -39,9 +40,14 @@ public class LessonActivity extends Activity {
     private boolean lessonFinished = false;
 
     private LinearLayout bodyContainer;
-    private View progressFill;
+    private View progressFill, progressSpacer;
     private TextView heartsText;
     private TextView progressLabel;
+    /** 当前题目，用于答错时写入错题本 */
+    private JSONObject currentQuestion;
+    /** 红心耗尽弹窗只弹一次，避免每答错一题叠加一层 Dialog */
+    private boolean noHeartsDialogShown;
+    private Dialog noHeartsDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,12 +99,12 @@ public class LessonActivity extends Activity {
         progressFill = new View(this);
         progressFill.setBackgroundColor(Ui.color(this, R.color.primary));
         progressFill.setLayoutParams(new LinearLayout.LayoutParams(0, h, 0f));
-        View spacer = new View(this);
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, h, 1f));
-        track.addView(progressFill); track.addView(spacer);
+        progressSpacer = new View(this);
+        progressSpacer.setLayoutParams(new LinearLayout.LayoutParams(0, h, 1f));
+        track.addView(progressFill); track.addView(progressSpacer);
         top.addView(track);
 
-        top.addView(Ui.gap(this, 10));
+        top.addView(Ui.hgap(this, 10));
         heartsText = Ui.tv(this, "❤ " + Progress.get(this).getHearts(), 15, R.color.cardinal, true);
         top.addView(heartsText);
         root.addView(top);
@@ -112,7 +118,7 @@ public class LessonActivity extends Activity {
         bodyContainer = new LinearLayout(this);
         bodyContainer.setOrientation(LinearLayout.VERTICAL);
         bodyContainer.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), Ui.dp(this, 40));
-        sv.addView(bodyContainer, new ViewGroup.LayoutParams(
+        sv.addView(bodyContainer, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(sv, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
@@ -125,14 +131,14 @@ public class LessonActivity extends Activity {
         currentIndex = idx;
         JSONObject q = questions.optJSONObject(idx);
         if (q == null) { finishLesson(); return; }
+        currentQuestion = q;
         final String type = Data.s(q, "type");
         final String ans = Data.s(q, "ans");
         final String exp = Data.s(q, "exp");
 
-        // 进度
+        // 进度（fill 与 spacer 权重之和恒为 1，否则进度条永远填不满）
         float frac = total > 0 ? (float) idx / total : 0f;
-        ((LinearLayout.LayoutParams) progressFill.getLayoutParams()).weight = frac;
-        progressFill.requestLayout();
+        setProgress(frac);
         progressLabel.setText("第 " + (idx + 1) + " / " + total + " 题 · " + typeLabel(type));
 
         LinearLayout card = Ui.card(this, R.color.card, 0);
@@ -223,11 +229,23 @@ public class LessonActivity extends Activity {
         }
     }
 
+    private void setProgress(float frac) {
+        float f = Math.max(0f, Math.min(1f, frac));
+        if (progressFill != null) {
+            ((LinearLayout.LayoutParams) progressFill.getLayoutParams()).weight = f;
+            progressFill.requestLayout();
+        }
+        if (progressSpacer != null) {
+            ((LinearLayout.LayoutParams) progressSpacer.getLayoutParams()).weight = 1f - f;
+            progressSpacer.requestLayout();
+        }
+    }
+
     private void gradeChoice(LinearLayout card, List<String> labels, String ans,
                              TextView chosen, boolean ok, String exp, LinearLayout fbSlot) {
         if (answeredCount > currentIndex) return;
         answeredCount++;
-        if (ok) correctCount++; else loseHeart();
+        if (ok) correctCount++; else { loseHeart(); recordMistake(); }
         for (int i = 0; i < card.getChildCount(); i++) {
             View v = card.getChildAt(i);
             if (v instanceof TextView && labels.contains(((TextView) v).getText().toString())) {
@@ -247,7 +265,7 @@ public class LessonActivity extends Activity {
     private void gradeInput(boolean ok, String ans, String exp, LinearLayout fbSlot) {
         if (answeredCount > currentIndex) return;
         answeredCount++;
-        if (ok) correctCount++; else loseHeart();
+        if (ok) correctCount++; else { loseHeart(); recordMistake(); }
         fbSlot.removeAllViews();
         fbSlot.addView(Ui.feedback(this,
                 (ok ? "✓ 答对了！" : "✗ 正确答案：" + ans) + (exp.length() > 0 ? "\n\n解析：" + exp : ""), ok));
@@ -265,16 +283,54 @@ public class LessonActivity extends Activity {
         bodyContainer.addView(cont);
     }
 
+    /** 答错写入错题本（SRS 复习的数据来源）。题目 id 在单课内唯一。 */
+    private void recordMistake() {
+        if (currentQuestion == null) return;
+        Progress.get(this).addMistake(lessonId, lessonTitle, currentQuestion);
+    }
+
     private void loseHeart() {
         Progress P = Progress.get(this);
         P.loseHeart();
         if (heartsText != null) heartsText.setText("❤ " + P.getHearts());
-        if (P.getHearts() <= 0) showNoHearts();
+        // 只弹一次；否则红心已为 0 后每答错一题都会叠加一层 Dialog
+        if (P.getHearts() <= 0 && !noHeartsDialogShown) {
+            noHeartsDialogShown = true;
+            showNoHearts();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (lesson == null) return; // 走了 Ui.error 兜底页
+        Progress P = Progress.get(this);
+        P.refreshHearts();
+        if (heartsText != null) heartsText.setText("❤ " + P.getHearts());
+        // 弹窗被 onPause 关掉（按 Home / 切走）但红心仍为 0 时重新拦截，
+        // 否则可无限答题且不扣红心、白拿经验与宝石。
+        if (!lessonFinished && P.getHearts() <= 0
+                && (noHeartsDialog == null || !noHeartsDialog.isShowing())) {
+            noHeartsDialogShown = true;
+            showNoHearts();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (noHeartsDialog != null && noHeartsDialog.isShowing()) noHeartsDialog.dismiss();
+        noHeartsDialog = null;
+        noHeartsDialogShown = false; // 允许 onResume 在红心仍为 0 时重新弹
+        super.onPause();
     }
 
     private void showNoHearts() {
+        if (isFinishing() || isDestroyed()) { finish(); return; }
         final Dialog d = new Dialog(this);
+        noHeartsDialog = d;
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        // 红心已耗尽：不允许按返回键关掉后继续无成本答题，只能补满或结束本课
+        d.setCancelable(false);
         LinearLayout dim = new LinearLayout(this);
         dim.setBackgroundColor(Color.argb(140, 0, 0, 0));
         dim.setGravity(Gravity.CENTER);
@@ -291,13 +347,13 @@ public class LessonActivity extends Activity {
         TextView refill = Ui.button(this, "花 350 💎 补满", R.color.cardinal, R.color.dangerDark, R.color.card, 15);
         refill.setOnClickListener(v -> {
             if (P.buyHeartRefill()) { if (heartsText != null) heartsText.setText("❤ " + P.getHearts());
-                Ui.toast(this, "红心已补满"); d.dismiss(); }
+                Ui.toast(this, "红心已补满"); d.dismiss(); noHeartsDialogShown = false; }
             else Ui.toast(this, "宝石不足");
         });
         card.addView(refill);
         card.addView(Ui.gap(this, 8));
-        TextView later = Ui.ghostButton(this, "稍后再说", R.color.wolf);
-        later.setOnClickListener(v -> d.dismiss());
+        TextView later = Ui.ghostButton(this, "结束本课", R.color.wolf);
+        later.setOnClickListener(v -> { d.dismiss(); finish(); });
         card.addView(later);
         dim.addView(card);
         d.setContentView(dim);
@@ -329,9 +385,7 @@ public class LessonActivity extends Activity {
 
     private void showComplete(Progress.LessonOutcome o, List<String> newly, int cur, List<JSONObject> all) {
         bodyContainer.removeAllViews();
-        float frac = 1f;
-        ((LinearLayout.LayoutParams) progressFill.getLayoutParams()).weight = frac;
-        progressFill.requestLayout();
+        setProgress(1f);
         progressLabel.setText("本课完成！");
 
         LinearLayout card = Ui.card(this, R.color.card, 0);
@@ -345,9 +399,9 @@ public class LessonActivity extends Activity {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER);
         row.addView(statBox("⭐ " + o.xpGained, "经验"));
-        row.addView(Ui.gap(this, 14));
+        row.addView(Ui.hgap(this, 14));
         row.addView(statBox("💎 +" + o.gemsGained, "宝石"));
-        row.addView(Ui.gap(this, 14));
+        row.addView(Ui.hgap(this, 14));
         row.addView(statBox("🔥 " + o.streakAfter, "连胜"));
         card.addView(row);
         if (o.dailyGoalReachedNow) {
@@ -368,8 +422,9 @@ public class LessonActivity extends Activity {
         // 按钮
         LinearLayout btns = new LinearLayout(this);
         btns.setOrientation(LinearLayout.HORIZONTAL);
-        btns.setWeightSum(2f);
-        if (cur >= 0 && cur + 1 < all.size()) {
+        boolean hasNext = (cur >= 0 && cur + 1 < all.size());
+        btns.setWeightSum(hasNext ? 2f : 1f);
+        if (hasNext) {
             TextView next = Ui.button(this, "下一课 ›", R.color.primary, R.color.primaryDark, R.color.card, 16);
             next.setLayoutParams(Ui.lpWeight(1f));
             final String nid = Data.s(all.get(cur + 1), "id");
@@ -379,7 +434,7 @@ public class LessonActivity extends Activity {
                 startActivity(in); finish();
             });
             btns.addView(next);
-            btns.addView(Ui.gap(this, 8));
+            btns.addView(Ui.hgap(this, 8));
         }
         TextView back = Ui.ghostButton(this, "返回教材", R.color.wolf);
         back.setLayoutParams(Ui.lpWeight(1f));

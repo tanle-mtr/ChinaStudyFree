@@ -689,7 +689,9 @@ public class Progress {
     public boolean isAutoNarrate() { return gb("autoNarrate", true); }
     public void setAutoNarrate(boolean v) { safePut("autoNarrate", v); save(); }
 
-    public void resetAll() { sp.edit().remove(KEY).apply(); sInstance = null; load(); }
+    /** 就地重置当前单例。不能把 sInstance 置空，否则已存在的 Activity 仍持有旧实例，
+     *  而新页面 get() 会创建新实例，两个实例各自 save() 会互相覆盖导致进度分裂。 */
+    public void resetAll() { sp.edit().remove(KEY).apply(); load(); }
 
     // ===== 确定性哈希（与 web rng.ts 逐位一致） =====
     private static BigInteger djb2Hash(String s) {
